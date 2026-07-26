@@ -1,4 +1,8 @@
 node_modules/
+dist/
+*.tsbuildinfo
+playwright-report/
+test-results/
 
 .promptfoo/
 evals/results/

@@ -13,6 +13,9 @@
     "validate:promptfoo": "node scripts/run-promptfoo.mjs validate",
     "eval:workflows": "node scripts/run-promptfoo.mjs eval",
     "skills:list": "npx --yes skills@1.5.20 add ./plugins/d2l-sales-workflows --list",
-    "test": "node --test"
+    "test": "node --test && npm --prefix app test -- --run",
+    "app:dev": "npm --prefix app run dev",
+    "app:build": "npm --prefix app run build",
+    "app:test": "npm --prefix app test -- --run"
   }
 }
