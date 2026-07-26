@@ -1,0 +1,5 @@
+interface:
+  display_name: "customer story matching"
+  short_description: Use the customer-story-matching workflow
+policy:
+  allow_implicit_invocation: true
