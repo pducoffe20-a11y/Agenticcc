@@ -1,0 +1,59 @@
+schema_version: 1
+vendoring_policy:
+  upstream_code_vendored: false
+  statement: >-
+    No upstream code is vendored in this repository. The sources below were
+    reviewed for patterns, interoperability, evaluation, or safety boundaries
+    only.
+
+sources:
+  - name: zapier/gtm-cheat-codes
+    repository: https://github.com/zapier/gtm-cheat-codes
+    license: MIT
+    reviewed_ref: "022a2884f40316ef22269e29fd61b8a0f0c4cb4a"
+    vendored: false
+    integration_boundary: >-
+      Pattern-level review informed searchable workflow metadata, explicit
+      connector needs, action approval gates, and public-safety classification.
+      No upstream code or prose was copied.
+
+  - name: promptfoo/promptfoo
+    repository: https://github.com/promptfoo/promptfoo
+    license: MIT
+    reviewed_ref: "5aa09586752c906763135ddb867b203b4ecd14e0"
+    vendored: false
+    integration_boundary: >-
+      Promptfoo is invoked as a pinned external package by repository-owned
+      synthetic evaluations. Upstream source, configurations, and test cases
+      were not copied.
+
+  - name: gitleaks/gitleaks
+    repository: https://github.com/gitleaks/gitleaks
+    license: MIT
+    reviewed_ref: "b58d3f102cf3a2c84cb7f923d05c25c9b1aed84b"
+    vendored: false
+    integration_boundary: >-
+      Secret-scanning practices inform the repository's public-safety policy.
+      Gitleaks is invoked by a pinned GitHub Action; upstream binaries, source,
+      rule sets, and configurations were not copied.
+
+  - name: agentskills/agentskills
+    repository: https://github.com/agentskills/agentskills
+    license:
+      code: Apache-2.0
+      documentation: CC-BY-4.0
+    reviewed_ref: "38a2ff82958afee88dadf4831509e6f7e9d8ef4e"
+    vendored: false
+    integration_boundary: >-
+      Agent Skills compatibility and packaging conventions were reviewed.
+      Specification code and documentation text are not included or reproduced.
+
+  - name: vercel-labs/skills
+    repository: https://github.com/vercel-labs/skills
+    license: MIT
+    reviewed_ref: "e173b8c88f2581cfdaa1b6767c6519a08155790e"
+    vendored: false
+    integration_boundary: >-
+      CLI discovery and project-scoped installation behavior informs
+      portability documentation. The CLI is invoked as a pinned external npm
+      package; its source and dependencies are not committed here.

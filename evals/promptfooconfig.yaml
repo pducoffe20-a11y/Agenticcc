@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+
+description: Synthetic regression checks for the highest-risk D2L sales workflows
+
+prompts:
+  - file://prompts/skill-runner.txt
+
+providers:
+  - openai:chat:gpt-5.4-mini-2026-03-17
+
+tests: file://tests/core-workflows.yaml
+
+sharing: false
+
+evaluateOptions:
+  maxConcurrency: 1

@@ -1,0 +1,325 @@
+- description: Prospect strategy returns strict JSON with evidence kept in the correct buckets
+  vars:
+    skill_instructions: file://../plugins/d2l-sales-workflows/skills/prospect-strategy-workflow/SKILL.md
+    source_context: |
+      This fixture is entirely synthetic.
+      Source: synthetic-prospects.csv, dated 2026-07-20.
+      Record:
+        prospect_id: SYN-001
+        full_name: Avery Chen
+        title: Director of Learning
+        organization: Northstar Skills Cooperative
+        provided_note: Exploring a member onboarding refresh later this year.
+      No email address, tenure, budget, incumbent platform, buying authority, public research,
+      or approved customer story was provided. No public research was performed.
+    user_request: |
+      Use rank-prep-json mode for this single record. Return the structured prospect record and
+      preserve every evidence gap.
+    output_requirements: |
+      Return only valid JSON with no Markdown fence or prose. The top-level object must contain
+      workflow_stage equal to "rank-prep-json" and records containing exactly one object.
+      The record must include prospect_id, status, provided_input_facts, public_research_facts,
+      verified_facts, inferred_pains, unknowns, and outreach_payload.review.review_status.
+      Use only "Work Now", "Light Research", or "Suppress" for status. Put supplied facts only in
+      provided_input_facts. Since no research occurred, public_research_facts and verified_facts
+      must both be empty arrays. Keep possible pains separate in inferred_pains. Put the missing
+      email, tenure, budget, incumbent platform, and buying authority in unknowns. Set review_status
+      to "needs_review".
+  assert:
+    - type: is-json
+    - type: javascript
+      value: |
+        const data = typeof output === 'string' ? JSON.parse(output) : output;
+        const records = Array.isArray(data.records) ? data.records : [];
+        if (data.workflow_stage !== 'rank-prep-json' || records.length !== 1) {
+          return false;
+        }
+        const record = records[0];
+        const validStatus = ['Work Now', 'Light Research', 'Suppress'].includes(record.status);
+        const arrayKeys = [
+          'provided_input_facts',
+          'public_research_facts',
+          'verified_facts',
+          'inferred_pains',
+          'unknowns',
+        ];
+        const arraysPresent = arrayKeys.every((key) => Array.isArray(record[key]));
+        const unknowns = Array.isArray(record.unknowns)
+          ? record.unknowns.map(String).join(' ').toLowerCase()
+          : '';
+        const requiredUnknowns = [
+          /email/,
+          /tenure/,
+          /budget/,
+          /(incumbent|current).*(platform|system)|platform/,
+          /buying authority|authority/,
+        ].every((pattern) => pattern.test(unknowns));
+        return record.prospect_id === 'SYN-001'
+          && validStatus
+          && arraysPresent
+          && record.public_research_facts.length === 0
+          && record.verified_facts.length === 0
+          && requiredUnknowns
+          && record.outreach_payload?.review?.review_status === 'needs_review';
+
+- description: Cold email is short and human without unsupported proof or a sent claim
+  vars:
+    skill_instructions: file://../plugins/d2l-sales-workflows/skills/cold-email/SKILL.md
+    source_context: |
+      This fixture is entirely synthetic.
+      Recipient: Morgan Lee, VP of Member Education at Cedar Grove Association.
+      Supplied signal: Morgan's synthetic note says the team is reviewing member onboarding
+      because learners disengage early in the process.
+      Approved value statement: A single learning hub can simplify member onboarding.
+      Goal: earn a reply about whether simplifying onboarding is worth exploring.
+      There are no customer examples, performance results, benchmarks, product-usage facts,
+      or prior-contact facts. Nothing has been sent.
+    user_request: |
+      Draft one first-touch cold email for human review.
+    output_requirements: |
+      Return plain text with these labels in this order: "Subject:", "Email:", "Evidence notes:",
+      "Claims to review:", and "Status: DRAFT - NOT SENT". Use one 2-4 word lowercase subject.
+      Keep the email body at 90 words or fewer, make one low-friction ask, and use no more than one
+      question mark. Use only supplied evidence and the approved value statement. Do not invent
+      proof, results, customer examples, prior contact, or delivery status.
+  assert:
+    - type: contains
+      value: "Subject:"
+    - type: contains
+      value: "Email:"
+    - type: contains
+      value: "Evidence notes:"
+    - type: contains
+      value: "Claims to review:"
+    - type: contains
+      value: "Status: DRAFT - NOT SENT"
+    - type: not-contains
+      value: "I hope this email finds you well"
+    - type: not-contains
+      value: "best-in-class"
+    - type: javascript
+      value: |
+        const text = String(output);
+        const subjectMatch = text.match(/^Subject:\s*(.+)$/m);
+        const bodyMatch = text.match(/Email:\s*([\s\S]*?)\nEvidence notes:/);
+        if (!subjectMatch || !bodyMatch) {
+          return false;
+        }
+        const subjectWords = subjectMatch[1].trim().split(/\s+/);
+        const body = bodyMatch[1].trim();
+        const bodyWords = body.split(/\s+/).filter(Boolean);
+        const unsupportedProof = /\b(customers?|clients?|case stud(?:y|ies)|benchmark|proven|results?)\b|\b(increase|improve|reduce|save|cut|boost)(?:d|s|ing)?\b|%/i;
+        const sentClaim = /\b(i|we)\s+(have\s+)?(sent|emailed|contacted)\b|\b(has been|was)\s+(sent|delivered)\b/i;
+        const jargon = /\b(leverage|synergy|leading provider|circle back)\b/i;
+        return subjectWords.length >= 2
+          && subjectWords.length <= 4
+          && subjectMatch[1] === subjectMatch[1].toLowerCase()
+          && bodyWords.length >= 20
+          && bodyWords.length <= 90
+          && body.toLowerCase().includes('cedar grove')
+          && body.toLowerCase().includes('onboarding')
+          && (body.match(/\?/g) || []).length === 1
+          && !unsupportedProof.test(body)
+          && !sentClaim.test(text)
+          && !jargon.test(body);
+
+- description: Daily to-do uses all four standard sections and preserves ownership
+  vars:
+    skill_instructions: file://../plugins/d2l-sales-workflows/skills/daily-todo-workflow/SKILL.md
+    source_context: |
+      This fixture is entirely synthetic. The planning date is 2026-07-26.
+      Recent-message scan:
+      1. Customer email from Sam at Redwood Learning Lab: "Pat, please send the revised pricing
+         sheet by 3:00 PM today."
+      2. Prospect email from Jamie at Harbor Guild: "I will confirm the pilot attendee list on
+         Monday."
+      3. Internal note: "Could someone share the deck for tomorrow's Bluebird call?" No owner is
+         named.
+      4. Vendor newsletter: "July product roundup." It contains no request or sales action.
+      No task, reply, or external-system update has been performed.
+    user_request: |
+      Build today's seller-ready daily action list and show what needs confirmation or suppression.
+    output_requirements: |
+      Return Markdown using exactly these level-two headings once each and in this order:
+      "## Executive summary", "## Priority to-do list",
+      "## Ambiguous / needs confirmation", and "## Suppressed / ignored".
+      The priority list must capture the Pat-owned pricing action with owner, account, due time,
+      and compact email evidence. Preserve Jamie's action as prospect-owned, put the ownerless deck
+      request in the ambiguous section, and put the vendor newsletter in the suppressed section.
+      Do not claim any task or message was created or sent.
+  assert:
+    - type: contains
+      value: "## Executive summary"
+    - type: contains
+      value: "## Priority to-do list"
+    - type: contains
+      value: "## Ambiguous / needs confirmation"
+    - type: contains
+      value: "## Suppressed / ignored"
+    - type: not-contains
+      value: "Task created"
+    - type: not-contains
+      value: "Message sent"
+    - type: javascript
+      value: |
+        const text = String(output);
+        const headings = [
+          '## Executive summary',
+          '## Priority to-do list',
+          '## Ambiguous / needs confirmation',
+          '## Suppressed / ignored',
+        ];
+        const positions = headings.map((heading) => text.indexOf(heading));
+        const onceEach = headings.every(
+          (heading) => text.split(heading).length - 1 === 1,
+        );
+        const ordered = positions.every(
+          (position, index) => position >= 0 && (index === 0 || position > positions[index - 1]),
+        );
+        const lower = text.toLowerCase();
+        return onceEach
+          && ordered
+          && lower.includes('pat')
+          && lower.includes('redwood learning lab')
+          && lower.includes('pricing')
+          && (lower.includes('3:00 pm') || lower.includes('3 pm') || lower.includes('15:00'))
+          && lower.includes('jamie')
+          && lower.includes('prospect-owned')
+          && lower.includes('deck')
+          && lower.includes('newsletter');
+
+- description: Pre-call brief exposes unknowns and does not invent account facts
+  vars:
+    skill_instructions: file://../plugins/d2l-sales-workflows/skills/pre-call-brief-workflow/SKILL.md
+    source_context: |
+      This fixture is entirely synthetic.
+      Meeting: 2026-07-28 at 14:00 UTC.
+      Account: BluePeak Manufacturing.
+      Participant: Taylor Kim, VP of Talent.
+      Supplied agenda from Taylor's email: reduce administration involved in manager training.
+      Meeting goal supplied by Pat: understand the current process and agree on a useful next step.
+      Unknown: budget, current learning system, timeline, decision process, success metric,
+      procurement requirements, and other stakeholders. No public research was performed.
+    user_request: |
+      Prepare a tactical pre-call brief I can use five minutes before the meeting.
+    output_requirements: |
+      Return only valid JSON with no Markdown fence or prose. Include every standard skill field:
+      meeting_objective, account_snapshot, contact_context, why_now, likely_pains_or_priorities,
+      discovery_questions, value_angles, objection_prep, opening_line, next_step_to_ask_for, and
+      unknowns_to_confirm. Use arrays where the field is naturally plural. Prefix each pain or
+      priority with either "Confirmed:" or "Assumption:" so its evidence status is explicit.
+      unknowns_to_confirm must explicitly include budget,
+      current learning system, timeline, and decision process. Do not name an incumbent vendor,
+      employee count, approved budget, deadline, or buyer priority that the source does not provide.
+  assert:
+    - type: is-json
+    - type: javascript
+      value: |
+        const data = typeof output === 'string' ? JSON.parse(output) : output;
+        const required = [
+          'meeting_objective',
+          'account_snapshot',
+          'contact_context',
+          'why_now',
+          'likely_pains_or_priorities',
+          'discovery_questions',
+          'value_angles',
+          'objection_prep',
+          'opening_line',
+          'next_step_to_ask_for',
+          'unknowns_to_confirm',
+        ];
+        const unknowns = Array.isArray(data.unknowns_to_confirm)
+          ? data.unknowns_to_confirm.map(String).join(' ').toLowerCase()
+          : '';
+        const pains = Array.isArray(data.likely_pains_or_priorities)
+          ? data.likely_pains_or_priorities.map(String)
+          : [];
+        const evidenceLabelsPresent = pains.length > 0
+          && pains.every((item) => /^(Confirmed|Assumption):/i.test(item));
+        const confirmedAdminContext = pains.some(
+          (item) => /^Confirmed:/i.test(item) && /admin/i.test(item),
+        );
+        const forbidden = /\b(cornerstone|workday|sap|docebo)\b|budget\s+(?:is|was|has been)\s+approved|\$\s*\d|\b\d{4,}\s+employees\b|\bq[1-4]\s+deadline\b/i;
+        return required.every((key) => Object.hasOwn(data, key))
+          && Array.isArray(data.unknowns_to_confirm)
+          && /budget/.test(unknowns)
+          && /(current|incumbent).*(learning system|platform|lms)|learning system/.test(unknowns)
+          && /timeline/.test(unknowns)
+          && /decision process/.test(unknowns)
+          && evidenceLabelsPresent
+          && confirmedAdminContext
+          && !forbidden.test(JSON.stringify(data));
+
+- description: Post-call debrief captures owned next steps without claiming a CRM update
+  vars:
+    skill_instructions: file://../plugins/d2l-sales-workflows/skills/post-call-debrief-workflow/SKILL.md
+    source_context: |
+      This fixture is entirely synthetic.
+      Call date: 2026-07-25.
+      Attendees: Pat and Jordan Rivera from Summit Credentialing Network.
+      Notes:
+      - Jordan said reporting takes too much manual cleanup.
+      - Jordan asked for a two-page pilot outline by 2026-07-29.
+      - Pat agreed to send that outline by 2026-07-29.
+      - Jordan agreed to confirm three pilot administrators by 2026-07-31.
+      - Jordan wants a pilot proposal to review by 2026-08-02.
+      - Budget, procurement process, decision authority, and success metrics were not discussed.
+      No CRM write, task creation, or follow-up email has occurred.
+    user_request: |
+      Debrief the call, extract next steps, and prepare concise CRM-ready notes.
+    output_requirements: |
+      Return only valid JSON with no Markdown fence or prose. Include call_summary,
+      buyer_priorities, pain_points, qualification_signals, objections_or_risks, next_steps,
+      crm_update, evidence_quotes, and unknowns. next_steps must be an array of objects with status
+      exactly "pending", plus owner, action, due_date, and evidence, including Pat's 2026-07-29 outline and Jordan's
+      2026-07-31 administrator confirmation. crm_update must be an object with status exactly
+      "draft_not_applied" and concise notes. Unknowns must include budget, procurement, decision
+      authority, and success metrics. Do not claim the CRM, a task, or an email was updated,
+      created, logged, saved, or sent.
+  assert:
+    - type: is-json
+    - type: not-contains
+      value: "CRM has been updated"
+    - type: not-contains
+      value: "saved to Salesforce"
+    - type: javascript
+      value: |
+        const data = typeof output === 'string' ? JSON.parse(output) : output;
+        const required = [
+          'call_summary',
+          'buyer_priorities',
+          'pain_points',
+          'qualification_signals',
+          'objections_or_risks',
+          'next_steps',
+          'crm_update',
+          'evidence_quotes',
+          'unknowns',
+        ];
+        const steps = Array.isArray(data.next_steps) ? data.next_steps : [];
+        const patStep = steps.some((step) =>
+          /pat/i.test(String(step.owner))
+          && /outline/i.test(String(step.action))
+          && step.due_date === '2026-07-29'
+          && /pending/i.test(String(step.status)),
+        );
+        const jordanStep = steps.some((step) =>
+          /jordan/i.test(String(step.owner))
+          && /administrator/i.test(String(step.action))
+          && step.due_date === '2026-07-31'
+          && /pending/i.test(String(step.status)),
+        );
+        const unknowns = Array.isArray(data.unknowns)
+          ? data.unknowns.map(String).join(' ').toLowerCase()
+          : '';
+        const completedExternalAction = /\b(crm|salesforce).{0,24}\b(has been|was|is)\s+(updated|logged|saved)\b|\b(task|email).{0,18}\b(was|has been)\s+(created|sent)\b/i;
+        return required.every((key) => Object.hasOwn(data, key))
+          && patStep
+          && jordanStep
+          && data.crm_update?.status === 'draft_not_applied'
+          && /budget/.test(unknowns)
+          && /procurement/.test(unknowns)
+          && /decision authority|authority/.test(unknowns)
+          && /success metric/.test(unknowns)
+          && !completedExternalAction.test(JSON.stringify(data));

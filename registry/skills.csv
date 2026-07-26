@@ -1,0 +1,21 @@
+skill_name,display_name,category,repo_path,status,primary_output,approval_gate,public_safe
+association-trigger-workflow,Association Trigger Workflow,prospecting,plugins/d2l-sales-workflows/skills/association-trigger-workflow/SKILL.md,active,Prioritized association trigger brief,before_external_write,yes
+codex-email-json-bridge,Codex Email JSON Bridge,integration,plugins/d2l-sales-workflows/skills/codex-email-json-bridge/SKILL.md,active,Validated email handoff JSON,before_external_write,yes
+codex-review-handoff,Codex Review Handoff,quality,plugins/d2l-sales-workflows/skills/codex-review-handoff/SKILL.md,active,Structured review handoff,none_read_only,yes
+cold-email,Cold Email,outreach,plugins/d2l-sales-workflows/skills/cold-email/SKILL.md,active,Personalized cold email draft,before_external_write,yes
+d2l-sales-workflow-index,D2L Sales Workflow Index,navigation,plugins/d2l-sales-workflows/skills/d2l-sales-workflow-index/SKILL.md,active,Workflow recommendation and routing,none_read_only,yes
+daily-todo-workflow,Daily Todo Workflow,productivity,plugins/d2l-sales-workflows/skills/daily-todo-workflow/SKILL.md,active,Prioritized daily action plan,before_external_write,yes
+deal-journey-workflow,Deal Journey Workflow,deal-management,plugins/d2l-sales-workflows/skills/deal-journey-workflow/SKILL.md,active,Deal-stage journey plan,before_external_write,yes
+feedback-calibration,Feedback Calibration,quality,plugins/d2l-sales-workflows/skills/feedback-calibration/SKILL.md,active,Calibrated feedback assessment,none_read_only,yes
+intent-outreach-workflow,Intent Outreach Workflow,outreach,plugins/d2l-sales-workflows/skills/intent-outreach-workflow/SKILL.md,active,Intent-based outreach draft,before_external_write,yes
+net-new-account-workflow,Net New Account Workflow,prospecting,plugins/d2l-sales-workflows/skills/net-new-account-workflow/SKILL.md,active,Net-new account pursuit plan,before_external_write,yes
+outbound-sequencing,Outbound Sequencing,outreach,plugins/d2l-sales-workflows/skills/outbound-sequencing/SKILL.md,active,Multi-step outbound sequence,before_external_write,yes
+post-call-debrief-workflow,Post-call Debrief Workflow,meetings,plugins/d2l-sales-workflows/skills/post-call-debrief-workflow/SKILL.md,active,Post-call summary and follow-ups,before_external_write,yes
+pre-call-brief-workflow,Pre-call Brief Workflow,meetings,plugins/d2l-sales-workflows/skills/pre-call-brief-workflow/SKILL.md,active,Pre-call account and contact brief,none_read_only,yes
+prospect-dashboard-workflow,Prospect Dashboard Workflow,reporting,plugins/d2l-sales-workflows/skills/prospect-dashboard-workflow/SKILL.md,active,Prospect pipeline dashboard,none_read_only,yes
+prospect-enrichment-json,Prospect Enrichment JSON,data-enrichment,plugins/d2l-sales-workflows/skills/prospect-enrichment-json/SKILL.md,active,Normalized prospect enrichment JSON,none_read_only,yes
+prospect-html-email-refresh,Prospect HTML Email Refresh,outreach,plugins/d2l-sales-workflows/skills/prospect-html-email-refresh/SKILL.md,active,Refreshed HTML email draft,before_external_write,yes
+prospect-research,Prospect Research,research,plugins/d2l-sales-workflows/skills/prospect-research/SKILL.md,active,Evidence-backed prospect research brief,none_read_only,yes
+prospect-strategy-workflow,Prospect Strategy Workflow,strategy,plugins/d2l-sales-workflows/skills/prospect-strategy-workflow/SKILL.md,active,Prospect engagement strategy,none_read_only,yes
+sales-assistant-workflow,Sales Assistant Workflow,orchestration,plugins/d2l-sales-workflows/skills/sales-assistant-workflow/SKILL.md,active,Coordinated sales task plan,before_external_write,yes
+seller-side-sales-assistant-workflow,Seller-side Sales Assistant Workflow,orchestration,plugins/d2l-sales-workflows/skills/seller-side-sales-assistant-workflow/SKILL.md,active,Seller-side execution plan,before_external_write,yes

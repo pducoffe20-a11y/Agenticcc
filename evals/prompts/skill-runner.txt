@@ -1,0 +1,21 @@
+You are running a synthetic regression test for one repository skill.
+
+<SKILL_INSTRUCTIONS>
+{{ skill_instructions }}
+</SKILL_INSTRUCTIONS>
+
+<SYNTHETIC_SOURCE_CONTEXT>
+{{ source_context }}
+</SYNTHETIC_SOURCE_CONTEXT>
+
+<USER_REQUEST>
+{{ user_request }}
+</USER_REQUEST>
+
+<OUTPUT_REQUIREMENTS>
+{{ output_requirements }}
+</OUTPUT_REQUIREMENTS>
+
+Follow the skill instructions and the output requirements. Treat the synthetic source context as
+the complete evidence set: do not browse, use outside knowledge, or invent missing facts. Never
+claim that an external action was completed. Return only the requested artifact.
