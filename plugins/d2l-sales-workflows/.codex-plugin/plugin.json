@@ -1,18 +1,18 @@
 {
   "name": "d2l-sales-workflows",
   "version": "0.1.0",
-  "description": "D2l Sales Workflows plugin",
+  "description": "Local-first D2L sales workflow launchers with evidence, approval, and export boundaries.",
   "author": {
     "name": "Local developer"
   },
   "skills": "./skills/",
   "interface": {
-    "displayName": "D2l Sales Workflows",
-    "shortDescription": "Use D2l Sales Workflows in Codex.",
-    "longDescription": "D2l Sales Workflows adds a local Codex plugin scaffold.",
+    "displayName": "D2L Agent Command Center",
+    "shortDescription": "Prepare trustworthy D2L sales workflows for Codex.",
+    "longDescription": "Discover D2L sales workflows, prepare evidence-aware inputs, and create review-safe deliverables with explicit connector fallbacks and approval boundaries.",
     "developerName": "Local developer",
     "category": "Productivity",
     "capabilities": [],
-    "defaultPrompt": "Help me use D2l Sales Workflows."
+    "defaultPrompt": "Use the d2l-sales-workflow-index skill to recommend the narrowest workflow for my goal. State required inputs, connector fallbacks, expected output, and approval boundary before preparing any deliverable. Do not perform external writes."
   }
 }

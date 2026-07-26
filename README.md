@@ -65,19 +65,22 @@ npm run eval:workflows
 Only synthetic fixtures belong in evaluations. Never use real account, contact,
 email, transcript, or customer-proof data.
 
-## Run the Prospect Review MVP
+## Run the Agent Command Center
 
-The local-first application turns synthetic CSV or JSON into a deterministic,
-evidence-aware review queue. It performs no network writes and provides no send,
-CRM, calendar, or task execution path.
+The local-first React application discovers all registered agents and skills,
+normalizes CSV, XLSX, JSON, and text imports, and exports validated Codex prompts
+and launch payloads. It performs no runtime or connector execution and provides
+no send, CRM, calendar, messaging, or task write path.
 
 ```bash
 npm install --prefix app
 npm run app:dev
 ```
 
-Open the local Vite URL and choose **Load synthetic sample**. Application tests
-and the production build are available from the repository root:
+Open the local Vite URL and use **Import Expert** or **Prepare launch**. See
+[`docs/AGENT_LAUNCHPAD.md`](docs/AGENT_LAUNCHPAD.md) and
+[`docs/IMPORT_CONTRACT.md`](docs/IMPORT_CONTRACT.md) for behavior and limits.
+Application tests and the production build are available from the repository root:
 
 ```bash
 npm run app:test
