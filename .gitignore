@@ -1,0 +1,10 @@
+node_modules/
+
+.promptfoo/
+evals/results/
+evals/results.*
+promptfoo-results.*
+
+.env
+.env.*
+!.env.example
