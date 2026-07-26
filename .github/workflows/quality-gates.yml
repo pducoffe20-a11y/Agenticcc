@@ -26,11 +26,23 @@ jobs:
         with:
           node-version: 24
 
+      - name: Install dashboard dependencies
+        run: npm ci --prefix app
+
       - name: Run tests
         run: npm test
 
       - name: Run quality checks
         run: npm run quality
+
+      - name: Build dashboard
+        run: npm run app:build
+
+      - name: Install Playwright browser
+        run: npx --prefix app playwright install --with-deps chromium
+
+      - name: Run dashboard browser tests
+        run: npm --prefix app run test:e2e
 
       - name: Verify portable skill listing
         run: npx --yes skills@1.5.20 add ./plugins/d2l-sales-workflows --list

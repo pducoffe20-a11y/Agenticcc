@@ -1,0 +1,401 @@
+{
+  "schema_version": 1,
+  "agents": [
+    {
+      "agent_id": "prospect-strategy",
+      "display_name": "Prospect Strategy Agent",
+      "description": "Rank prospects and prepare an evidence-aware engagement strategy.",
+      "launcher_skill": "prospect-strategy-workflow",
+      "launch_modes": [
+        "rank-prep-json",
+        "strategy-refresh"
+      ],
+      "categories": [
+        "Research and Prioritization"
+      ],
+      "accepted_inputs": [
+        "prospects",
+        "accounts",
+        "ImportPackage"
+      ],
+      "required_connectors": [
+        "prospect-research"
+      ],
+      "connector_fallback": "Use user-supplied local files or pasted context; preserve missing fields as unknowns.",
+      "primary_output": "Evidence-backed prospect strategy",
+      "approval_gate": "none_read_only",
+      "public_safe": true,
+      "related_skills": [
+        "prospect-research",
+        "prospect-enrichment-json",
+        "cold-email"
+      ],
+      "recommended_sequences": [],
+      "source_reference": "plugins/d2l-sales-workflows/agents/source-agent-catalog.md",
+      "runtime_adapter": "prompt_export_only"
+    },
+    {
+      "agent_id": "sales-assistant",
+      "display_name": "Sales Assistant",
+      "description": "Coordinate account context, priorities, and the next useful seller move.",
+      "launcher_skill": "sales-assistant-workflow",
+      "launch_modes": [
+        "account-brief",
+        "next-move",
+        "task-plan"
+      ],
+      "categories": [
+        "Today / Orchestration"
+      ],
+      "accepted_inputs": [
+        "accounts",
+        "opportunities",
+        "notes",
+        "ImportPackage"
+      ],
+      "required_connectors": [],
+      "connector_fallback": "Use user-supplied local files or pasted context; preserve missing fields as unknowns.",
+      "primary_output": "Coordinated sales task plan",
+      "approval_gate": "before_external_write",
+      "public_safe": true,
+      "related_skills": [
+        "daily-todo-workflow",
+        "deal-journey-workflow"
+      ],
+      "recommended_sequences": [],
+      "source_reference": "plugins/d2l-sales-workflows/agents/source-agent-catalog.md",
+      "runtime_adapter": "prompt_export_only"
+    },
+    {
+      "agent_id": "intent-outreach",
+      "display_name": "Intent Outreach Drafter",
+      "description": "Turn supplied intent signals into review-safe outreach drafts.",
+      "launcher_skill": "intent-outreach-workflow",
+      "launch_modes": [
+        "intent-draft",
+        "signal-review"
+      ],
+      "categories": [
+        "Outreach and Follow-Up"
+      ],
+      "accepted_inputs": [
+        "prospects",
+        "activity",
+        "intent-signals",
+        "ImportPackage"
+      ],
+      "required_connectors": [],
+      "connector_fallback": "Use user-supplied local files or pasted context; preserve missing fields as unknowns.",
+      "primary_output": "Intent-based outreach draft",
+      "approval_gate": "before_external_write",
+      "public_safe": true,
+      "related_skills": [
+        "cold-email",
+        "outbound-sequencing"
+      ],
+      "recommended_sequences": [],
+      "source_reference": "plugins/d2l-sales-workflows/agents/source-agent-catalog.md",
+      "runtime_adapter": "prompt_export_only"
+    },
+    {
+      "agent_id": "deal-journey",
+      "display_name": "Deal Journey Analyzer",
+      "description": "Analyze supplied deal signals and recommend the next buyer move.",
+      "launcher_skill": "deal-journey-workflow",
+      "launch_modes": [
+        "journey-review",
+        "next-buyer-move"
+      ],
+      "categories": [
+        "Meetings and Deals"
+      ],
+      "accepted_inputs": [
+        "opportunities",
+        "meetings",
+        "notes",
+        "ImportPackage"
+      ],
+      "required_connectors": [],
+      "connector_fallback": "Use user-supplied local files or pasted context; preserve missing fields as unknowns.",
+      "primary_output": "Deal-stage journey plan",
+      "approval_gate": "before_external_write",
+      "public_safe": true,
+      "related_skills": [
+        "post-call-debrief-workflow",
+        "cold-email"
+      ],
+      "recommended_sequences": [],
+      "source_reference": "plugins/d2l-sales-workflows/agents/source-agent-catalog.md",
+      "runtime_adapter": "prompt_export_only"
+    },
+    {
+      "agent_id": "daily-todo",
+      "display_name": "Daily To-Do Planner",
+      "description": "Build an owned daily plan from supplied work signals.",
+      "launcher_skill": "daily-todo-workflow",
+      "launch_modes": [
+        "daily-plan",
+        "signal-triage"
+      ],
+      "categories": [
+        "Today / Orchestration"
+      ],
+      "accepted_inputs": [
+        "activity",
+        "meetings",
+        "opportunities",
+        "ImportPackage"
+      ],
+      "required_connectors": [],
+      "connector_fallback": "Use user-supplied local files or pasted context; preserve missing fields as unknowns.",
+      "primary_output": "Prioritized daily action plan",
+      "approval_gate": "before_external_write",
+      "public_safe": true,
+      "related_skills": [
+        "sales-assistant-workflow",
+        "pre-call-brief-workflow"
+      ],
+      "recommended_sequences": [],
+      "source_reference": "plugins/d2l-sales-workflows/agents/source-agent-catalog.md",
+      "runtime_adapter": "prompt_export_only"
+    },
+    {
+      "agent_id": "net-new-account",
+      "display_name": "Net-New Account Identifier Agent",
+      "description": "Prioritize net-new accounts using supplied, traceable signals.",
+      "launcher_skill": "net-new-account-workflow",
+      "launch_modes": [
+        "trigger-scan",
+        "pursuit-plan"
+      ],
+      "categories": [
+        "Research and Prioritization"
+      ],
+      "accepted_inputs": [
+        "accounts",
+        "activity",
+        "ImportPackage"
+      ],
+      "required_connectors": [
+        "prospect-research"
+      ],
+      "connector_fallback": "Use user-supplied local files or pasted context; preserve missing fields as unknowns.",
+      "primary_output": "Net-new account pursuit plan",
+      "approval_gate": "before_external_write",
+      "public_safe": true,
+      "related_skills": [
+        "prospect-research",
+        "prospect-strategy-workflow"
+      ],
+      "recommended_sequences": [],
+      "source_reference": "plugins/d2l-sales-workflows/agents/source-agent-catalog.md",
+      "runtime_adapter": "prompt_export_only"
+    },
+    {
+      "agent_id": "association-trigger",
+      "display_name": "Association Trigger Agent",
+      "description": "Find useful association-account triggers without inventing evidence.",
+      "launcher_skill": "association-trigger-workflow",
+      "launch_modes": [
+        "trigger-scan",
+        "trigger-brief"
+      ],
+      "categories": [
+        "Research and Prioritization"
+      ],
+      "accepted_inputs": [
+        "accounts",
+        "activity",
+        "ImportPackage"
+      ],
+      "required_connectors": [
+        "prospect-research"
+      ],
+      "connector_fallback": "Use user-supplied local files or pasted context; preserve missing fields as unknowns.",
+      "primary_output": "Prioritized association trigger brief",
+      "approval_gate": "before_external_write",
+      "public_safe": true,
+      "related_skills": [
+        "prospect-research",
+        "prospect-strategy-workflow"
+      ],
+      "recommended_sequences": [],
+      "source_reference": "plugins/d2l-sales-workflows/agents/source-agent-catalog.md",
+      "runtime_adapter": "prompt_export_only"
+    },
+    {
+      "agent_id": "pre-call-brief",
+      "display_name": "Pre-Call Brief Agent",
+      "description": "Prepare a concise, evidence-aware meeting brief and discovery plan.",
+      "launcher_skill": "pre-call-brief-workflow",
+      "launch_modes": [
+        "brief",
+        "discovery-plan"
+      ],
+      "categories": [
+        "Meetings and Deals"
+      ],
+      "accepted_inputs": [
+        "meetings",
+        "accounts",
+        "prospects",
+        "ImportPackage"
+      ],
+      "required_connectors": [],
+      "connector_fallback": "Use user-supplied local files or pasted context; preserve missing fields as unknowns.",
+      "primary_output": "Pre-call account and contact brief",
+      "approval_gate": "none_read_only",
+      "public_safe": true,
+      "related_skills": [
+        "prospect-research",
+        "deal-journey-workflow"
+      ],
+      "recommended_sequences": [],
+      "source_reference": "plugins/d2l-sales-workflows/agents/source-agent-catalog.md",
+      "runtime_adapter": "prompt_export_only"
+    },
+    {
+      "agent_id": "post-call-debrief",
+      "display_name": "Post-Call Debrief Agent",
+      "description": "Turn supplied call notes into a debrief and pending follow-ups.",
+      "launcher_skill": "post-call-debrief-workflow",
+      "launch_modes": [
+        "debrief",
+        "follow-up-prep"
+      ],
+      "categories": [
+        "Meetings and Deals"
+      ],
+      "accepted_inputs": [
+        "meetings",
+        "call-notes",
+        "ImportPackage"
+      ],
+      "required_connectors": [],
+      "connector_fallback": "Use user-supplied local files or pasted context; preserve missing fields as unknowns.",
+      "primary_output": "Post-call summary and follow-ups",
+      "approval_gate": "before_external_write",
+      "public_safe": true,
+      "related_skills": [
+        "deal-journey-workflow",
+        "cold-email"
+      ],
+      "recommended_sequences": [],
+      "source_reference": "plugins/d2l-sales-workflows/agents/source-agent-catalog.md",
+      "runtime_adapter": "prompt_export_only"
+    },
+    {
+      "agent_id": "prospect-dashboard",
+      "display_name": "Prospect Dashboard Agent",
+      "description": "Prepare a seller-ready prospect pipeline dashboard from normalized data.",
+      "launcher_skill": "prospect-dashboard-workflow",
+      "launch_modes": [
+        "dashboard-build",
+        "dashboard-qa"
+      ],
+      "categories": [
+        "Data, Import, and Reporting"
+      ],
+      "accepted_inputs": [
+        "prospects",
+        "accounts",
+        "ImportPackage"
+      ],
+      "required_connectors": [],
+      "connector_fallback": "Use user-supplied local files or pasted context; preserve missing fields as unknowns.",
+      "primary_output": "Prospect pipeline dashboard",
+      "approval_gate": "none_read_only",
+      "public_safe": true,
+      "related_skills": [
+        "prospect-enrichment-json",
+        "prospect-strategy-workflow"
+      ],
+      "recommended_sequences": [],
+      "source_reference": "plugins/d2l-sales-workflows/agents/source-agent-catalog.md",
+      "runtime_adapter": "prompt_export_only"
+    },
+    {
+      "agent_id": "seller-side-sales-assistant",
+      "display_name": "Seller-Side Sales Assistant",
+      "description": "Review seller-side prospect boards and prepare careful next actions.",
+      "launcher_skill": "seller-side-sales-assistant-workflow",
+      "launch_modes": [
+        "board-review",
+        "prospecting-copilot"
+      ],
+      "categories": [
+        "Today / Orchestration"
+      ],
+      "accepted_inputs": [
+        "prospects",
+        "accounts",
+        "html",
+        "ImportPackage"
+      ],
+      "required_connectors": [],
+      "connector_fallback": "Use user-supplied local files or pasted context; preserve missing fields as unknowns.",
+      "primary_output": "Seller-side execution plan",
+      "approval_gate": "before_external_write",
+      "public_safe": true,
+      "related_skills": [
+        "prospect-dashboard-workflow",
+        "cold-email"
+      ],
+      "recommended_sequences": [],
+      "source_reference": "plugins/d2l-sales-workflows/agents/source-agent-catalog.md",
+      "runtime_adapter": "prompt_export_only"
+    }
+  ],
+  "recipes": [
+    {
+      "recipe_id": "trigger-strategy-outreach",
+      "name": "Trigger Scan \u2192 Prospect Strategy \u2192 Outreach Draft",
+      "steps": [
+        "association-trigger-workflow",
+        "prospect-strategy-workflow",
+        "intent-outreach-workflow"
+      ]
+    },
+    {
+      "recipe_id": "enrichment-strategy-dashboard",
+      "name": "Prospect Enrichment \u2192 Prospect Strategy \u2192 Prospect Dashboard",
+      "steps": [
+        "prospect-enrichment-json",
+        "prospect-strategy-workflow",
+        "prospect-dashboard-workflow"
+      ]
+    },
+    {
+      "recipe_id": "precall-debrief-followup",
+      "name": "Pre-Call Brief \u2192 Post-Call Debrief \u2192 Follow-Up Draft",
+      "steps": [
+        "pre-call-brief-workflow",
+        "post-call-debrief-workflow",
+        "cold-email"
+      ]
+    },
+    {
+      "recipe_id": "deal-followup",
+      "name": "Deal Journey \u2192 Follow-Up Draft",
+      "steps": [
+        "deal-journey-workflow",
+        "cold-email"
+      ]
+    },
+    {
+      "recipe_id": "todo-next-move",
+      "name": "Daily To-Do \u2192 Account Brief / Next Move",
+      "steps": [
+        "daily-todo-workflow",
+        "sales-assistant-workflow"
+      ]
+    },
+    {
+      "recipe_id": "import-recommend",
+      "name": "Import Expert \u2192 Recommended Agent",
+      "steps": [
+        "d2l-sales-workflow-index"
+      ]
+    }
+  ]
+}

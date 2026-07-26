@@ -1,99 +1,42 @@
-import { useMemo, useRef, useState } from 'react';
-import { buildSession, parseInput, transition, type ReviewStatus, type Session, type Status } from './domain';
-import { sampleCsv } from './fixtures';
+import {useMemo,useRef,useState} from 'react';
+import readXlsxFile,{readSheet} from 'read-excel-file/browser';
+import catalog from './generated/launchpad-catalog.json';
+import {buildLaunchRequest,codexRuntimeLauncher,createImportPackage,IMPORT_LIMITS,parseText,profiles,promptExportLauncher,suggestMap,validateLaunchRequest,type CatalogAgent,type ImportPackage,type ProfileId,type Row} from './launchpad-domain';
 
-type Filter = 'All' | Status;
-const statusClass = (value: string) => value.toLowerCase().replaceAll(' ', '-').replaceAll('_', '-');
-
-export function App() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<Filter>('All');
-  const [error, setError] = useState('');
-  const [revision, setRevision] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
-  const selected = session?.accepted.find((item) => item.id === selectedId) ?? session?.accepted[0] ?? null;
-  const visible = useMemo(() => session?.accepted.filter((item) => filter === 'All' || item.status === filter) ?? [], [session, filter]);
-
-  const load = (rows: Record<string, unknown>[], source: string) => {
-    const next = buildSession(rows, source); setSession(next); setSelectedId(next.accepted[0]?.id ?? null); setFilter('All'); setError(''); setRevision('');
-  };
-  const loadSample = () => load(parseInput(sampleCsv, 'csv'), 'synthetic-prospects.csv');
-  const upload = async (file?: File) => {
-    if (!file) return;
-    if (file.size > 2_000_000) { setError('Choose a CSV or JSON file smaller than 2 MB.'); return; }
-    const extension = file.name.split('.').pop()?.toLowerCase();
-    if (extension !== 'csv' && extension !== 'json') { setError('Choose a .csv or .json file.'); return; }
-    try { load(parseInput(await file.text(), extension), file.name); } catch (reason) { setError(reason instanceof Error ? reason.message : 'The file could not be processed.'); }
-    if (inputRef.current) inputRef.current.value = '';
-  };
-  const review = (next: ReviewStatus) => {
-    if (!session || !selected) return;
-    try {
-      const updated = transition(selected, next, revision.trim());
-      setSession({ ...session, accepted: session.accepted.map((item) => item.id === selected.id ? updated : item), audit: [...session.audit, `${selected.fullName}: review moved from ${selected.reviewStatus} to ${next}.`] });
-      setRevision('');
-    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Review state could not be changed.'); }
-  };
-
-  return <div className="app-shell">
-    <header className="topbar">
-      <div><p className="eyebrow">Seller control center</p><h1>Prospect Review</h1></div>
-      <div className="safety"><span aria-hidden="true">●</span><div><strong>External actions disabled</strong><small>Review state stays in this browser session</small></div></div>
-    </header>
-
-    <main>
-      <section className="intake" aria-labelledby="intake-heading">
-        <div><p className="eyebrow">Today’s workspace</p><h2 id="intake-heading">Start with source data</h2><p>Load the synthetic sample or inspect your own local CSV/JSON. Nothing is uploaded.</p></div>
-        <div className="intake-actions">
-          <button className="secondary" onClick={loadSample}>Load synthetic sample</button>
-          <button onClick={() => inputRef.current?.click()}>Choose CSV or JSON</button>
-          <input ref={inputRef} className="sr-only" type="file" accept=".csv,.json" aria-label="Choose prospect CSV or JSON" onChange={(event) => void upload(event.target.files?.[0])}/>
-        </div>
-      </section>
-      <div className="announce" aria-live="polite">{error || (session ? `${session.accepted.length} accepted, ${session.rejected.length} rejected, ${session.duplicates.length} duplicates.` : '')}</div>
-
-      {!session ? <section className="empty-state"><div className="empty-icon">PR</div><h2>Your review queue is ready to build</h2><p>Try the public-safe sample to see evidence, deterministic scores, drafts, decisions, and audit history.</p><button onClick={loadSample}>Load synthetic sample</button></section> : <>
-        <section className="metrics" aria-label="Intake summary">
-          {[['Accepted', session.accepted.length], ['Rejected', session.rejected.length], ['Duplicates', session.duplicates.length], ['Needs review', session.accepted.filter((p) => p.reviewStatus === 'needs_review').length]].map(([label, value]) => <div className="metric" key={label}><span>{label}</span><strong>{value}</strong></div>)}
-          <div className="source"><span>Active source</span><strong>{session.sourceName}</strong></div>
-        </section>
-
-        <div className="workspace">
-          <aside className="queue" aria-label="Prospect queue">
-            <div className="panel-heading"><div><p className="eyebrow">Prioritized queue</p><h2>Prospects</h2></div><span>{visible.length}</span></div>
-            <div className="filters" aria-label="Filter prospects">{(['All', 'Work Now', 'Light Research', 'Suppress'] as Filter[]).map((item) => <button className={filter === item ? 'active' : ''} aria-pressed={filter === item} onClick={() => setFilter(item)} key={item}>{item}</button>)}</div>
-            <div className="prospect-list">{visible.map((item) => <button className={`prospect-card ${selected?.id === item.id ? 'selected' : ''}`} onClick={() => { setSelectedId(item.id); setRevision(''); }} key={item.id}>
-              <div><strong>{item.fullName}</strong><span>{item.title ?? 'Title unknown'} · {item.organization}</span></div><b>{item.scores.total}</b><i className={statusClass(item.status)}>{item.status}</i>
-            </button>)}</div>
-          </aside>
-
-          {selected && <section className="detail" aria-label={`Review ${selected.fullName}`}>
-            <div className="detail-header"><div><p className="eyebrow">Decision brief · row {selected.row}</p><h2>{selected.fullName}</h2><p>{selected.title ?? 'Title unknown'} · {selected.organization}</p></div><div className="score"><strong>{selected.scores.total}</strong><span>/ 100</span><i className={statusClass(selected.status)}>{selected.status}</i></div></div>
-            <div className="score-grid">{Object.entries(selected.scores).filter(([key]) => key !== 'total').map(([key, value]) => <div key={key}><span>{key}</span><strong>{value}</strong><small>/{key === 'fit' ? 30 : key === 'evidence' ? 20 : 25}</small></div>)}</div>
-            <details><summary>Why this score</summary><ul>{selected.explanation.map((item) => <li key={item}>{item}</li>)}</ul></details>
-
-            <div className="evidence-grid">
-              <section><div className="bucket-title verified"><span>01</span><h3>Provided evidence</h3></div>{selected.evidence.map((item) => <article className="evidence-item" key={item.id}><strong>{item.field.replaceAll('_', ' ')}</strong><p>{item.value}</p><small>{item.sourceLabel} · {item.sourceRef}{item.observedAt ? ` · ${item.observedAt}` : ''}</small></article>)}</section>
-              <section><div className="bucket-title inferred"><span>02</span><h3>Inferred angles</h3></div>{selected.inferredAngles.map((item) => <article className="evidence-item inference" key={item}><p>{item}</p><small>Hypothesis only · verify before use</small></article>)}</section>
-              <section><div className="bucket-title unknown"><span>03</span><h3>Unknowns</h3></div><ul className="unknown-list">{selected.unknowns.map((item) => <li key={item}>{item}</li>)}</ul></section>
-            </div>
-
-            <section className="draft"><div className="section-heading"><div><p className="eyebrow">Human checkpoint</p><h3>Message draft</h3></div><i className={statusClass(selected.reviewStatus)}>{selected.reviewStatus.replaceAll('_', ' ')}</i></div>
-              {selected.draft ? <><label>Subject<input readOnly value={selected.draft.subject}/></label><label>Draft<textarea readOnly rows={5} value={selected.draft.body}/></label><div className="claim"><strong>Claim-to-evidence check</strong>{selected.draft.claims.map((claim) => <p key={claim.text}>✓ {claim.text} <small>{claim.evidenceIds.length} evidence links</small></p>)}{selected.draft.flags.map((flag) => <p className="flag" key={flag}>! {flag}</p>)}</div>
-                <label>Revision request<textarea value={revision} onChange={(event) => setRevision(event.target.value)} rows={2} placeholder="Describe the exact change needed"/></label>
-                <div className="review-actions"><button className="secondary" disabled={selected.reviewStatus !== 'needs_review' || !revision.trim()} onClick={() => review('changes_requested')}>Request changes</button><button className="secondary danger" disabled={selected.reviewStatus !== 'needs_review'} onClick={() => review('rejected')}>Reject</button><button disabled={selected.reviewStatus !== 'needs_review'} onClick={() => review('approved_for_send_prep')}>Approve for preparation</button></div>
-                <p className="guardrail">Approval records a review decision only. Sending and external execution do not exist in this application.</p></> : <p className="muted">Draft suppressed because this record did not clear the outreach threshold.</p>}
-            </section>
-          </section>}
-        </div>
-
-        <div className="lower-grid">
-          <section className="report"><div className="panel-heading"><div><p className="eyebrow">Input quality</p><h2>Intake report</h2></div></div>{session.rejected.map((item) => <p key={`r${item.row}`}><b>Row {item.row} · Rejected</b><span>{item.reasons.join(' ')}</span></p>)}{session.duplicates.map((item) => <p key={`d${item.row}`}><b>Row {item.row} · Duplicate</b><span>Matches canonical row {item.canonicalRow} using {item.key}.</span></p>)}</section>
-          <section className="audit" aria-label="Traceability"><div className="panel-heading"><div><p className="eyebrow">Traceability</p><h2>Audit trail</h2></div><span>rules v1</span></div><ol>{session.audit.map((item, index) => <li key={`${item}-${index}`}><span>{String(index + 1).padStart(2, '0')}</span>{item}</li>)}</ol></section>
-        </div>
-      </>}
-    </main>
-    <footer>Agenticcc Prospect Review · Local session · Public-safe fixtures</footer>
-  </div>;
-}
+type Surface='launchpad'|'import'|'skills'|'history';
+const agents=catalog.agents as CatalogAgent[];
+const download=(name:string,value:unknown,type='application/json')=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([typeof value==='string'?value:JSON.stringify(value,null,2)],{type}));a.download=name;a.click();URL.revokeObjectURL(a.href)};
+export function App(){
+ const [surface,setSurface]=useState<Surface>('launchpad'),[query,setQuery]=useState(''),[category,setCategory]=useState('All');
+ const [builder,setBuilder]=useState<CatalogAgent|null>(null),[mode,setMode]=useState(''),[goal,setGoal]=useState(''),[attached,setAttached]=useState<ImportPackage[]>([]),[notice,setNotice]=useState('');
+ const [rawRows,setRawRows]=useState<Row[]>([]),[source,setSource]=useState(''),[format,setFormat]=useState(''),[profile,setProfile]=useState<ProfileId>('prospects'),[mapping,setMapping]=useState<Record<string,string>>({}),[confirmed,setConfirmed]=useState(false),[pkg,setPkg]=useState<ImportPackage|null>(null),[paste,setPaste]=useState('');
+ const [sheets,setSheets]=useState<string[]>([]),[pendingFile,setPendingFile]=useState<File|null>(null),[selectedSheet,setSelectedSheet]=useState('');
+ const [history,setHistory]=useState<{id:string;skill:string;mode:string;prompt:string;created:string}[]>(()=>{try{return JSON.parse(localStorage.getItem('launch-history-v1')||'[]')}catch{return[]}});
+ const fileRef=useRef<HTMLInputElement>(null); const allCategories=['All',...new Set(agents.flatMap(a=>a.categories))];
+ const filtered=useMemo(()=>agents.filter(a=>(category==='All'||a.categories.includes(category))&&`${a.display_name} ${a.description} ${a.launcher_skill}`.toLowerCase().includes(query.toLowerCase())),[query,category]);
+ const launch=builder&&mode&&goal?(()=>{try{return buildLaunchRequest(builder,mode,goal,attached,new Date().toISOString())}catch{return null}})():null;
+ const openBuilder=(a:CatalogAgent,imports:ImportPackage[]=[])=>(setBuilder(a),setMode(a.launch_modes[0]),setGoal(''),setAttached(imports),setNotice(''));
+ const resetImport=()=>{setRawRows([]);setSource('');setFormat('');setMapping({});setConfirmed(false);setPkg(null);setSheets([]);setPendingFile(null);setSelectedSheet('')};
+ const acceptRows=(rows:Row[],name:string,kind:string)=>{if(rows.length>IMPORT_LIMITS.rows)throw new Error(`Maximum ${IMPORT_LIMITS.rows.toLocaleString()} rows.`);setRawRows(rows);setSource(name);setFormat(kind);const headers=Object.keys(rows[0]||{});setMapping(suggestMap(headers,profile));setConfirmed(false);setPkg(null);setNotice(`${rows.length} rows parsed locally. Confirm the profile and mapping.`)};
+ const fileChosen=async(file?:File)=>{if(!file)return;resetImport();if(file.size>IMPORT_LIMITS.bytes){setNotice('File rejected: maximum size is 5 MiB.');return}const ext=file.name.split('.').pop()?.toLowerCase();try{if(ext==='xlsx'){const workbook=await readXlsxFile(file);const names=workbook.map(sheet=>sheet.sheet);if(names.length>IMPORT_LIMITS.sheets)throw new Error(`Workbook has more than ${IMPORT_LIMITS.sheets} sheets.`);setSheets(names);setPendingFile(file);setSelectedSheet(names[0]||'');setSource(file.name);setFormat('xlsx');setNotice('Choose a workbook sheet to continue.')}else if(ext==='csv'||ext==='json'||ext==='txt')acceptRows(parseText(await file.text(),ext),file.name,ext);else throw new Error('Choose CSV, XLSX, JSON, or TXT.')}catch(e){setNotice(e instanceof Error?e.message:'The file could not be parsed.')}};
+ const loadSheet=async()=>{if(!pendingFile||!selectedSheet)return;try{const matrix=await readSheet(pendingFile,selectedSheet);const [head,...body]=matrix;const headers=(head||[]).map((v,i)=>String(v??`field_${i+1}`));acceptRows(body.map(row=>Object.fromEntries(row.map((v,i)=>[headers[i],v]))),`${pendingFile.name}#${selectedSheet}`,'xlsx')}catch(e){setNotice(e instanceof Error?e.message:'The sheet could not be parsed.')}};
+ const confirm=()=>{try{const next=createImportPackage(rawRows,source,format,profile,mapping,new Date().toISOString());setPkg(next);setConfirmed(true);setNotice(`Import complete: ${next.quality_summary.accepted} accepted, ${next.quality_summary.rejected} rejected, ${next.quality_summary.duplicates} duplicates.`)}catch(e){setNotice(e instanceof Error?e.message:'Import validation failed.')}};
+ const saveLaunch=()=>{if(!launch)return;const next=[{id:launch.launch_id,skill:launch.launcher_skill,mode:launch.launch_mode,prompt:launch.generated_prompt,created:launch.created_at},...history].slice(0,20);setHistory(next);localStorage.setItem('launch-history-v1',JSON.stringify(next));setNotice('Launch metadata and prompt saved locally. Imported rows were not saved.')};
+ return <div className="shell"><a className="skip" href="#content">Skip to content</a><header><button className="brand" onClick={()=>setSurface('launchpad')}><span>AC</span><b>Agent Command Center</b></button><label className="search"><span>⌕</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search agents, skills, outputs…" aria-label="Global search"/></label><div className="local"><i/> Local-only</div></header>
+ <aside className="nav" aria-label="Primary navigation"><nav>{([['launchpad','Launchpad','⌂'],['import','Import Expert','⇩'],['skills','Skill Library','◇'],['history','Review / History','◴']] as const).map(([id,label,icon])=><button key={id} className={surface===id?'active':''} onClick={()=>setSurface(id)}><span>{icon}</span>{label}</button>)}</nav><div className="boundary"><strong>Runtime not configured</strong><p>Export a prompt or payload to use in an authenticated Codex session.</p></div></aside>
+ <main id="content"><div className="announce" aria-live="polite">{notice}</div>
+ {surface==='launchpad'&&<><section className="hero"><div><p className="eyebrow">Seller operating console</p><h1>Choose the next useful workflow.</h1><p>Discover the right tool, prepare trustworthy inputs, and export exactly what Codex needs—without hidden actions.</p></div><button onClick={()=>setSurface('import')}>Import seller data <span>→</span></button></section>
+ <section className="start"><div><p className="eyebrow">Start here</p><h2>What are you trying to do?</h2></div><div className="intent-row">{['Prepare a meeting','Prioritize accounts','Draft follow-up','Plan my day'].map(x=><button key={x} onClick={()=>setQuery(x.split(' ').at(-1)||'')}>{x}</button>)}</div></section>
+ <section className="recipe"><div className="recipe-number">01</div><div><p className="eyebrow">Recommended sequence</p><h2>{catalog.recipes[0].name}</h2><p>Three inspectable steps · edit before export · external writes blocked</p></div><div className="steps">{catalog.recipes[0].steps.map((s,i)=><span key={s}>{i+1}<b>{catalog.skills.find(k=>k.skill_name===s)?.display_name}</b></span>)}</div><button className="secondary" onClick={()=>openBuilder(agents[6])}>Inspect recipe</button></section>
+ <div className="section-head"><div><p className="eyebrow">Registry-backed tools</p><h2>Agents for the work in front of you</h2></div><select value={category} onChange={e=>setCategory(e.target.value)} aria-label="Filter agent category">{allCategories.map(c=><option key={c}>{c}</option>)}</select></div>
+ {allCategories.filter(c=>c!=='All').map(group=>{const items=filtered.filter(a=>a.categories.includes(group));return items.length?<section className="agent-group" key={group}><h3>{group}<span>{items.length}</span></h3><div>{items.map((a,i)=><article className={i===0&&group==='Today / Orchestration'?'agent featured':'agent'} key={a.agent_id}><div className="agent-index">{String(agents.indexOf(a)+1).padStart(2,'0')}</div><div className="agent-copy"><div className="badges"><span>{a.approval_gate==='none_read_only'?'Read-only':'Approval before write'}</span><span>{a.required_connectors.length?'Connector optional':'Local inputs'}</span></div><h4>{a.display_name}</h4><p>{a.description}</p><dl><div><dt>Needs</dt><dd>{a.accepted_inputs.slice(0,3).join(', ')}</dd></div><div><dt>Produces</dt><dd>{a.primary_output}</dd></div></dl></div><div className="agent-action"><code>{a.launcher_skill}</code><button onClick={()=>openBuilder(a)}>Prepare launch <span>→</span></button></div></article>)}</div></section>:null})}</>}
+ {surface==='import'&&<section className="page"><div className="page-title"><div><p className="eyebrow">Local intake workspace</p><h1>Import Expert</h1><p>Turn messy seller files into a clean, reviewable package. Files never leave this browser.</p></div><div className="limit">5 MiB · 5,000 rows · 10 sheets</div></div><ol className="progress"><li className={rawRows.length?'done':'current'}>1 <span>Add data</span></li><li className={sheets.length?'current':''}>2 <span>Choose source</span></li><li className={rawRows.length&&!confirmed?'current':''}>3 <span>Map & confirm</span></li><li className={confirmed?'done':''}>4 <span>Review & route</span></li></ol>
+ {!rawRows.length&&<div className="drop"><div className="drop-icon">⇩</div><h2>Add a local file</h2><p>CSV, XLSX, JSON, or TXT. One file at a time in this release.</p><button onClick={()=>fileRef.current?.click()}>Choose file</button><input ref={fileRef} hidden type="file" accept=".csv,.xlsx,.json,.txt" onChange={e=>void fileChosen(e.target.files?.[0])}/><div className="or">or paste text</div><textarea value={paste} onChange={e=>setPaste(e.target.value)} placeholder={'full_name: Avery Chen\norganization: Northstar Skills Cooperative'} aria-label="Paste structured text"/><button className="secondary" disabled={!paste.trim()} onClick={()=>{try{acceptRows(parseText(paste,'txt'),'pasted-text.txt','txt')}catch(e){setNotice(String(e))}}}>Parse pasted text</button></div>}
+ {sheets.length>0&&!rawRows.length&&<div className="mapping"><h2>Choose a workbook sheet</h2><select value={selectedSheet} onChange={e=>setSelectedSheet(e.target.value)}>{sheets.map(s=><option key={s}>{s}</option>)}</select><button onClick={()=>void loadSheet()}>Load selected sheet</button></div>}
+ {rawRows.length>0&&!confirmed&&<div className="mapping"><div className="mapping-head"><div><h2>Confirm profile and field mapping</h2><p>{source} · {rawRows.length} source rows · suggestions are not confirmed yet</p></div><label>Import profile<select value={profile} onChange={e=>{const p=e.target.value as ProfileId;setProfile(p);setMapping(suggestMap(Object.keys(rawRows[0]||{}),p))}}>{Object.entries(profiles).map(([id,p])=><option value={id} key={id}>{p.name}</option>)}</select></label></div><table><caption>Suggested field mapping</caption><thead><tr><th>Source header</th><th>Maps to</th><th>Sample type</th></tr></thead><tbody>{Object.keys(rawRows[0]||{}).map(h=><tr key={h}><td>{h}</td><td><select value={mapping[h]||''} onChange={e=>setMapping({...mapping,[h]:e.target.value})}><option value="">Do not import</option>{[...new Set([...profiles[profile].required,...profiles[profile].optional,...Object.values(mapping)])].filter(Boolean).map(f=><option key={f}>{f}</option>)}</select></td><td>{typeof rawRows[0][h]}</td></tr>)}</tbody></table><div className="mapping-actions"><button className="secondary" onClick={resetImport}>Start over</button><button onClick={confirm}>Confirm mapping & validate</button></div></div>}
+ {pkg&&<div className="quality"><div className="quality-head"><div><p className="eyebrow">ImportPackage v{pkg.schema_version}</p><h2>Quality review</h2></div><button className="secondary" onClick={()=>download(`${pkg.import_id}.json`,pkg)}>Download JSON</button></div><div className="metrics">{Object.entries(pkg.quality_summary).filter(([k])=>k!=='source_rows').map(([k,v])=><div key={k}><strong>{v}</strong><span>{k}</span></div>)}</div><div className="quality-grid"><section><h3>Accepted preview</h3><pre>{JSON.stringify(pkg.normalized_records.slice(0,2),null,2)}</pre></section><section><h3>Row outcomes</h3>{pkg.rejected_rows.map(r=><p key={r.row}><b>Rejected row {r.row}</b> {r.reasons.join(' ')}</p>)}{pkg.duplicates.map(r=><p key={r.row}><b>Duplicate row {r.row}</b> Canonical row {r.canonical_row} via {r.key}.</p>)}{!pkg.rejected_rows.length&&!pkg.duplicates.length&&<p>No rejected or duplicate rows.</p>}</section></div><h3>Recommended agents</h3><div className="recommendations">{pkg.recommended_launchers.map(id=>{const a=agents.find(x=>x.agent_id===id);return a?<button key={id} onClick={()=>openBuilder(a,[pkg])}><b>{a.display_name}</b><span>Attach package →</span></button>:null})}</div></div>}</section>}
+ {surface==='skills'&&<section className="page"><div className="page-title"><div><p className="eyebrow">Authoritative registry</p><h1>Skill Library</h1><p>Every active workflow, with its actual output and approval boundary.</p></div><div className="limit">{catalog.skills.length} active skills</div></div><div className="skill-table" role="region" aria-label="Skill catalog" tabIndex={0}><table><thead><tr><th>Skill</th><th>Category</th><th>Primary output</th><th>Approval</th><th>Action</th></tr></thead><tbody>{catalog.skills.filter(s=>`${s.skill_name} ${s.display_name} ${s.primary_output}`.toLowerCase().includes(query.toLowerCase())).map(s=><tr key={s.skill_name}><td><b>{s.display_name}</b><code>{s.skill_name}</code></td><td>{s.category}</td><td>{s.primary_output}</td><td><span className="pill">{s.approval_gate==='none_read_only'?'Read-only':'Before write'}</span></td><td>{agents.find(a=>a.launcher_skill===s.skill_name)?<button className="link" onClick={()=>openBuilder(agents.find(a=>a.launcher_skill===s.skill_name)!)}>Prepare</button>:<span className="muted">Use in Codex</span>}</td></tr>)}</tbody></table></div></section>}
+ {surface==='history'&&<section className="page"><div className="page-title"><div><p className="eyebrow">Opt-in browser storage</p><h1>Review / History</h1><p>Only prompts and launch metadata you explicitly save appear here. Imported rows are never stored.</p></div>{history.length>0&&<button className="secondary danger" onClick={()=>{setHistory([]);localStorage.removeItem('launch-history-v1');setNotice('Local launch history cleared.')}}>Clear local history</button>}</div>{history.length?<div className="history-list">{history.map(h=><article key={h.id}><div><b>{h.skill}</b><code>{h.mode}</code><small>{new Date(h.created).toLocaleString()}</small></div><button className="secondary" onClick={()=>void navigator.clipboard.writeText(h.prompt)}>Copy prompt</button></article>)}</div>:<div className="empty"><span>◴</span><h2>No saved launches</h2><p>Saving is optional. Browser storage is not secure enterprise storage.</p></div>}</section>}
+ </main>
+ {builder&&<div className="scrim" onMouseDown={e=>{if(e.target===e.currentTarget)setBuilder(null)}}><aside className="builder" role="dialog" aria-modal="true" aria-labelledby="builder-title"><div className="builder-head"><div><p className="eyebrow">Run Builder · export only</p><h2 id="builder-title">{builder.display_name}</h2><code>{builder.launcher_skill}</code></div><button className="icon-button" aria-label="Close Run Builder" onClick={()=>setBuilder(null)}>×</button></div><div className="builder-body"><label>Launch mode<select value={mode} onChange={e=>setMode(e.target.value)}>{builder.launch_modes.map(m=><option key={m}>{m}</option>)}</select></label><label>Your goal<textarea rows={4} value={goal} onChange={e=>setGoal(e.target.value)} placeholder="Describe the specific seller outcome you need…"/></label>{attached.length>0&&<div className="attached"><b>Attached ImportPackage</b><span>{attached[0].import_id} · {attached[0].quality_summary.accepted} accepted records</span></div>}<div className="facts"><div><span>Expected output</span><b>{builder.primary_output}</b></div><div><span>Connector requirements</span><b>{builder.required_connectors.join(', ')||'None required'}</b><small>{builder.connector_fallback}</small></div><div className="warning"><span>Approval boundary</span><b>{builder.approval_gate==='none_read_only'?'Read-only analysis':'Pause before any external write'}</b><small>External writes are impossible in this application.</small></div></div><div className="runtime"><i>○</i><div><b>{codexRuntimeLauncher.capability.label}</b><p>{codexRuntimeLauncher.capability.reason}</p></div></div><label>Codex-ready prompt<textarea className="prompt" rows={14} readOnly value={launch?.generated_prompt||'Complete the goal to generate and validate the prompt.'}/></label></div><div className="builder-foot"><label className="save"><input type="checkbox" onChange={e=>{if(e.target.checked)saveLaunch()}} disabled={!launch}/> Save metadata locally</label><div><button className="secondary" disabled={!launch||!validateLaunchRequest(launch)} onClick={()=>{if(launch)void promptExportLauncher.copy(launch).then(()=>setNotice('Prompt copied.'))}}>Copy prompt</button><button disabled={!launch||!validateLaunchRequest(launch)} onClick={()=>launch&&promptExportLauncher.download(launch)}>Download payload</button></div></div></aside></div>}
+ </div>}

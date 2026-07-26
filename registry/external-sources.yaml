@@ -57,3 +57,12 @@ sources:
       CLI discovery and project-scoped installation behavior informs
       portability documentation. The CLI is invoked as a pinned external npm
       package; its source and dependencies are not committed here.
+
+  - name: catamphetamine/read-excel-file
+    repository: https://gitlab.com/catamphetamine/read-excel-file
+    license: MIT
+    reviewed_ref: "8.0.3"
+    vendored: false
+    integration_boundary: >-
+      The pinned browser package parses user-selected XLSX files locally for
+      sheet discovery and row extraction. No upstream source or prose is copied.
