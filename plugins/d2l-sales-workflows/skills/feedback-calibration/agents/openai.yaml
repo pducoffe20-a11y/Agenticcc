@@ -1,0 +1,5 @@
+interface:
+  display_name: "feedback calibration"
+  short_description: Use the feedback-calibration workflow
+policy:
+  allow_implicit_invocation: true

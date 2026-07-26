@@ -1,0 +1,7 @@
+interface:
+  display_name: "Post-Call Debrief Workflow"
+  short_description: "Turn calls into CRM-ready notes"
+  default_prompt: "Use $post-call-debrief-workflow to debrief this transcript and write CRM-ready notes."
+
+policy:
+  allow_implicit_invocation: true

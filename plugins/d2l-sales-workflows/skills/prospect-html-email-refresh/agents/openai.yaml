@@ -1,0 +1,5 @@
+interface:
+  display_name: "prospect html email refresh"
+  short_description: Use the prospect-html-email-refresh workflow
+policy:
+  allow_implicit_invocation: true

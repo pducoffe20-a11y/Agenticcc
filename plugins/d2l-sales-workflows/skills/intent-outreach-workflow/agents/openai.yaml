@@ -1,0 +1,7 @@
+interface:
+  display_name: "Intent Outreach Workflow"
+  short_description: "Turn intent alerts into outreach"
+  default_prompt: "Use $intent-outreach-workflow to review recent intent alerts and draft careful outreach."
+
+policy:
+  allow_implicit_invocation: true

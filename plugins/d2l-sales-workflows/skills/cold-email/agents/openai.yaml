@@ -1,0 +1,5 @@
+interface:
+  display_name: "cold email"
+  short_description: Use the cold-email workflow
+policy:
+  allow_implicit_invocation: true

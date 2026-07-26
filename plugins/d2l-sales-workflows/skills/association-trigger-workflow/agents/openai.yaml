@@ -1,0 +1,7 @@
+interface:
+  display_name: "Association Trigger Workflow"
+  short_description: "Rank association outreach triggers"
+  default_prompt: "Use $association-trigger-workflow to run a weekly association trigger scan."
+
+policy:
+  allow_implicit_invocation: true

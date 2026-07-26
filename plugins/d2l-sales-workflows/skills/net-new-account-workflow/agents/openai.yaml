@@ -1,0 +1,7 @@
+interface:
+  display_name: "Net-New Account Workflow"
+  short_description: "Find net-new account triggers"
+  default_prompt: "Use $net-new-account-workflow to run this week's net-new account trigger scan."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Seller-Side Sales Assistant"
+  short_description: "Review boards and draft outreach"
+  default_prompt: "Use $seller-side-sales-assistant-workflow to review this prospect board and sort action groups."
+
+policy:
+  allow_implicit_invocation: true

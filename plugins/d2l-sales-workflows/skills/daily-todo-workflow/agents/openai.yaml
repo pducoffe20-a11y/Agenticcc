@@ -1,0 +1,7 @@
+interface:
+  display_name: "Daily To-Do Workflow"
+  short_description: "Build a seller-ready daily plan"
+  default_prompt: "Use $daily-todo-workflow to build today's prioritized seller to-do list."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Deal Journey Workflow"
+  short_description: "Analyze deals and next buyer moves"
+  default_prompt: "Use $deal-journey-workflow to review this deal context and recommend the next buyer move."
+
+policy:
+  allow_implicit_invocation: true

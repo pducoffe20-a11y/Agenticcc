@@ -1,0 +1,7 @@
+interface:
+  display_name: "Prospect Dashboard Workflow"
+  short_description: "Build seller-ready prospect boards"
+  default_prompt: "Use $prospect-dashboard-workflow to build a seller-ready dashboard from this prospect JSON."
+
+policy:
+  allow_implicit_invocation: true

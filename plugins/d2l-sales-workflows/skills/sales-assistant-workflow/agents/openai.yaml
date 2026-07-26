@@ -1,0 +1,7 @@
+interface:
+  display_name: "Sales Assistant Workflow"
+  short_description: "Prioritize accounts and next moves"
+  default_prompt: "Use $sales-assistant-workflow to rank my best accounts to work and explain the next move."
+
+policy:
+  allow_implicit_invocation: true

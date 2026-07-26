@@ -1,0 +1,7 @@
+interface:
+  display_name: "D2L Sales Workflow Index"
+  short_description: "Route to the right sales launcher"
+  default_prompt: "Use $d2l-sales-workflow-index to pick the best D2L sales workflow for this task."
+
+policy:
+  allow_implicit_invocation: true

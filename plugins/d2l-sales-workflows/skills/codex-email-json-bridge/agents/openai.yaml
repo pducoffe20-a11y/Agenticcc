@@ -1,0 +1,5 @@
+interface:
+  display_name: "codex email json bridge"
+  short_description: Use the codex-email-json-bridge workflow
+policy:
+  allow_implicit_invocation: true

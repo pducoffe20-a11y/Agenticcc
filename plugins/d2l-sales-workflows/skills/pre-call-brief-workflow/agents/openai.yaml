@@ -1,0 +1,7 @@
+interface:
+  display_name: "Pre-Call Brief Workflow"
+  short_description: "Prepare for sales calls fast"
+  default_prompt: "Use $pre-call-brief-workflow to prepare me for this upcoming customer meeting."
+
+policy:
+  allow_implicit_invocation: true

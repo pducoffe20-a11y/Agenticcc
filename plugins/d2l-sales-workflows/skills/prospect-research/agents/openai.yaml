@@ -1,0 +1,5 @@
+interface:
+  display_name: "prospect research"
+  short_description: Use the prospect-research workflow
+policy:
+  allow_implicit_invocation: true

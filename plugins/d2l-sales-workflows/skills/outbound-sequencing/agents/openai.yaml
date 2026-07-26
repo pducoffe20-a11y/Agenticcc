@@ -1,0 +1,5 @@
+interface:
+  display_name: "outbound sequencing"
+  short_description: Use the outbound-sequencing workflow
+policy:
+  allow_implicit_invocation: true

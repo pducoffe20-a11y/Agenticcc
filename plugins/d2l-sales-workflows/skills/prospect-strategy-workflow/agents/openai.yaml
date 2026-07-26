@@ -1,0 +1,7 @@
+interface:
+  display_name: "Prospect Strategy Workflow"
+  short_description: "Rank prospects and prep outreach JSON"
+  default_prompt: "Use $prospect-strategy-workflow to rank this prospect list and produce review-ready outreach JSON."
+
+policy:
+  allow_implicit_invocation: true

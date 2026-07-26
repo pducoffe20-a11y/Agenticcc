@@ -1,0 +1,5 @@
+interface:
+  display_name: "prospect enrichment json"
+  short_description: Use the prospect-enrichment-json workflow
+policy:
+  allow_implicit_invocation: true
